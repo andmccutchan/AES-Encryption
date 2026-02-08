@@ -1,10 +1,18 @@
+"""
+This program implements 128-bit block cipher AES
+Authors: Andrew McCuthan, Eleanor, Lam Do
+Date: Februrary 5, 2026
+CS402, Spring 2026
+"""
+
+import random
 import message_tuple as mt
 
 class AES:
     def __init__(self, key, message):
         self.key = key
         self.message = message
-        # self.sbox = self._create_sbox()
+        self.sbox = self._create_sbox()
         
     def _create_sbox(self):
         """
@@ -147,10 +155,68 @@ class AES:
                 state[row][col] = bin(int(state[row][col], 2) ^ int(round_key[row][col], 2))[2:].zfill(8)
         return state
         
+    
+    def _key_expansion(self, key):
+        """
+        Input: 128-bit key
+        Output: Array w of 44 words
+        """
+        # Pull values from textbook
+        Rcon_hex = ["00", "01", "02", "04", "08", "10", "20", "40", "80", "1B", "36"]
+        Rcon = [bin(int(hex,16))[2:].zfill(8) + "0" * 24 for hex in Rcon_hex]
+
+        # Initialize array w of 44 words
+        w = [None] * 44
+        # Step 1: Copy key to the first 4 words of w array
+        for i in range(4):
+            w[i] = key[i* 32 : i*32 + 32]
+        # Step 2: Fill in the rest of w array
+        for i in range(4, 44):
+            temp = w[i-1]
+            if i % 4 == 0:
+                temp = self._xor(self._sub_word(self._rot_word(temp)), Rcon[i//4])
+            w[i] = self._xor(w[i-4], temp)
+        return w
+    
+    def _xor(self, string1, string2):
+        """
+        This function performs a bitwise XOR operation on string1 and string2
+        Input: 2 strings of binary bits
+        Output: XOR string of string1 and string2
+        """
+        xor_result = int(string1, 2) ^ int(string2, 2)
+        xor_string = bin(xor_result)[2:]
+        output = xor_string.zfill(len(string1))
+        return output
+    
+    def _sub_word(self, word):
+        """
+        This function performs byte substitution via S-box
+        Input: 4-byte word
+        Output: 4-byte word 
+        """
+        output = ""
+        for i in range(0, 32, 8):
+            byte = word[i:i+8]
+            row = int(byte[:4], 2)
+            col = int(byte[4:], 2)
+            output = output + self.sbox[row][col] 
+        return output
+
+    def _rot_word(self, word):
+        """
+        This function performs one-byte left shift [B0, B1, B2, B3] -> [B1, B2, B3, B0]
+        Input: 4-byte word
+        Output 4-byte word
+        """
+        return word[8:] + word[:8]
+    
     def encrypt(self, key, message):
+        # Prepare state and round keys
         matrix_table = self._message_table(message)
         sbox = self._create_sbox()
         expanded_key = self._key_expansion(key)
+<<<<<<< HEAD
         initial_round_key = expanded_key[0]
         matrix_table = self._add_round_key(matrix_table, initial_round_key)
         
@@ -160,11 +226,45 @@ class AES:
             mixed_table = self._mix_columns(shifted_table)
             matrix_table = self._add_round_key(mixed_table, expanded_key[round])
         return matrix_table
+=======
+
+        # Build 11 round keys (each round key is 4 words -> 4x4 matrix of bytes)
+        round_keys = []
+        for r in range(11):
+            words = expanded_key[r*4:(r+1)*4]
+            round_key = [[None for _ in range(4)] for _ in range(4)]
+            for c in range(4):
+                word = words[c]
+                for row in range(4):
+                    round_key[row][c] = word[row*8:(row+1)*8]
+            round_keys.append(round_key)
+
+        # Initial AddRoundKey
+        state = self._add_round_key(matrix_table, round_keys[0])
+
+        # Rounds 1..9
+        for r in range(1, 10):
+            state = self._sub_bytes(state, sbox)
+            state = self._shift_rows(state)
+            state = self._mix_columns(state)
+            state = self._add_round_key(state, round_keys[r])
+
+        # Final round (no MixColumns)
+        state = self._sub_bytes(state, sbox)
+        state = self._shift_rows(state)
+        state = self._add_round_key(state, round_keys[10])
+
+        return state
+>>>>>>> c87fabe5357d6c78c8cc4d467dc79c342958af43
         
 
 def main():
-    cipher = AES(mt.key, mt.message)
+    key = bin(mt.key)[2:].zfill(128)
+    cipher = AES(key, mt.message)
     
+    print("Key:", key)
+    print(f"Message: {mt.message}\n")
+
     encrypted_message = cipher.encrypt(cipher.key, cipher.message)
     print("Original Message:")
     message_block = cipher._message_table(cipher.message)
@@ -173,6 +273,18 @@ def main():
     print("Encrypted Message Table:")
     for row in encrypted_message:
         print(row)  
+        
+    encrypted_message = cipher.encrypt(cipher.key, cipher.message)
+    
+    ciphertext = ""
+    for row in encrypted_message:
+        for byte in row:
+            byte_int = int(byte, 2)
+            byte_hex = hex(byte_int)[2:].zfill(2)
+            ciphertext += byte_hex
+    print("Ciphertext:", ciphertext)
+        
+            
     
     # cipher_table = cipher.message_table(cipher.message)
     # print("Cipher Table:")
@@ -183,8 +295,6 @@ def main():
     
 if __name__ == "__main__":
     main()
-
-
 
 
 
