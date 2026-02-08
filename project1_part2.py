@@ -6,11 +6,11 @@ mode_of_operation = "ECB"
 
 def ecb(message, key):
     ciphertext = "" 
-    for i in range(0, len(message), 16): 
+    for i in range(0, len(message), 128): 
         if i+16 > len(message):
-            block = message[i:] + ' ' * (16 - (len(message) - i))
+            block = message[i:] + ' ' * (128 - (len(message) - i))
         else:
-            block = message[i:i+16]
+            block = message[i:i+128]
         cipherblock = p1.AES(key, block).encrypt(key, block)
         ciphertext += cipherblock
     return ciphertext
@@ -19,11 +19,11 @@ def ctr(message, key):
     ciphertext = ""
     random.seed(mt.seed)  # Ensure the same random sequence for reproducibility
     counter = random.getrandbits(128)  # Initialize counter with a random 128-bit value
-    for i in range(0, len(message), 16):
+    for i in range(0, len(message), 128):
         if i+16 > len(message):
-            block = message[i:] + ' ' * (16 - (len(message) - i))
+            block = message[i:] + ' ' * (128 - (len(message) - i))
         else:
-            block = message[i:i+16]
+            block = message[i:i+128]
         cipher_ctr = p1.AES(key, str(counter)).encrypt(key, str(counter))
         if len(cipher_ctr) > len(block):
             cipher_ctr = cipher_ctr[:len(block)]
