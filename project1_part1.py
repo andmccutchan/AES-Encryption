@@ -150,6 +150,8 @@ class AES:
     def encrypt(self, key, message):
         matrix_table = self._message_table(message)
         sbox = self._create_sbox()
+        expanded_key = self._key_expansion(key)
+        initial_round_key = _addRound
         
         for round in range(10):
             sub_bytes_table = self._subBytes(matrix_table, sbox)
