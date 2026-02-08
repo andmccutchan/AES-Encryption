@@ -250,18 +250,32 @@ class AES:
 def main():
     key = bin(mt.key)[2:].zfill(128)
     cipher = AES(key, mt.message)
+    
+    print("Key:", key)
+    print(f"Message: {mt.message}\n")
 
     encrypted_message = cipher.encrypt(cipher.key, cipher.message)
     print("Original Message:")
     message_block = cipher._message_table(cipher.message)
     for row in message_block:
         print(row)  
+    print()
     print("Encrypted Message Table:")
     for row in encrypted_message:
         print(row)  
+    print()
         
     encrypted_message = cipher.encrypt(cipher.key, cipher.message)
-    print("Encrypted message:", encrypted_message)
+    
+    ciphertext = ""
+    for row in encrypted_message:
+        for byte in row:
+            byte_int = int(byte, 2)
+            byte_hex = hex(byte_int)[2:].zfill(2)
+            ciphertext += byte_hex
+    print("Ciphertext:", ciphertext)
+        
+            
     
     # cipher_table = cipher.message_table(cipher.message)
     # print("Cipher Table:")
