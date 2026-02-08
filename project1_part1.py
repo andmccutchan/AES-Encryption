@@ -258,9 +258,11 @@ def main():
     message_block = cipher._message_table(cipher.message)
     for row in message_block:
         print(row)  
+    print()
     print("Encrypted Message Table:")
     for row in encrypted_message:
         print(row)  
+    print()
         
     encrypted_message = cipher.encrypt(cipher.key, cipher.message)
     
