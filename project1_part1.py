@@ -4,9 +4,12 @@ class AES:
     def __init__(self, key, message):
         self.key = key
         self.message = message
-        self.sbox = self.create_sbox()
+        # self.sbox = self._create_sbox()
         
-    def create_sbox(self):
+    def _create_sbox(self):
+        """
+        generates an S-Box that will be used for the substitute bytes step of encryption rounds
+        """
         sbox = [
         ["63","7C","77","7B","F2","6B","6F","C5","30","01","67","2B","FE","D7","AB","76"],
         ["CA","82","C9","7D","FA","59","47","F0","AD","D4","A2","AF","9C","A4","72","C0"],
@@ -35,8 +38,17 @@ class AES:
                 # Pad binary value with 0's to get 8-bit string
                 binary_str = binary.zfill(8)
                 sbox[row][col] = binary_str
-        
-    def message_table(self, message):
+        return sbox
+    
+    def _message_table(self, message):
+        """Turns the initial message into a 4x4 table used for the rounds
+
+        Args:
+            message (string): original message to be encrypted
+
+        Returns:
+            list: a 2D array of our message with 8-bit index values.
+        """
         table = [[], [], [], []]
         for i in range(0, len(message), 8):
             byte = message[i:i+8]
@@ -44,13 +56,18 @@ class AES:
             table[row_index].append(byte)
         return table
     
-    def subBytes(self, message, sbox):
-        """
-        Input: 128-bit message, represented as 4x4 array that stores 8-bit values
-        Output: 128-bit message, represented as 4x4 array that stores 8-bit values
+    def _subBytes(self, message, sbox):
+        """Substitution step of enctrpytion. Takes the original matrix and substitutes the bytes with our S-Box.
+
+        Args:
+            message (string): 4x4 Matrix table of message
+            sbox (list): Our S-Box that will substitute the bytes
+
+        Returns:
+            list: 4x4 Matrix table of substiuted bits
         """
         output = []
-        # Initiliate new 128-bit message
+        # Initilize new 128-bit message
         for row in range(4):
             output.append([0 for col in range(4)])
 
@@ -65,59 +82,102 @@ class AES:
                 output[row][col] = sbox[sbox_row][sbox_col]
         return output
     
-    def shift_rows(self, table):
+    def _shift_rows(self, table):
+        """Shifting the rows of our table 
+
+        Args:
+            table (list): 4X4 matrix array. This will be the state after the substitution step.
+
+        Returns:
+            list: 4x4 matrix array. New state with shifted rows.
+        """
         shifted_table = []
         for i in range(4):
             if i == 0:
-                shifted_table.append(table[i])
+                shifted_table.append(table[i]) # First row is not shifted
             elif i == 1:
-                shifted_table.append(table[i][1:] + table[i][:1])
+                shifted_table.append(table[i][1:] + table[i][:1]) # Second row is shifted left by 1
             elif i == 2:
-                shifted_table.append(table[i][2:] + table[i][:2])
+                shifted_table.append(table[i][2:] + table[i][:2]) # Third row is shifted left by 2
             elif i == 3:
-                shifted_table.append(table[i][3:] + table[i][:3])
+                shifted_table.append(table[i][3:] + table[i][:3]) # You get the idea
         return shifted_table
     
-    def mixColumns(self, state):
+    def _mixColumns(self, state):
+        """This is performing the Mix column step of AES using GF multiplication.
+
+        Args:
+            state (list): 4x4 matrix array. 
+
+        Returns:
+            _type_: _description_
+        """
         for i in range(4):
-            s0 = state[0][i]
-            s1 = state[1][i]
-            s2 = state[2][i]
-            s3 = state[3][i]
+            # Convert binary strings to integers
+            s0 = int(state[0][i], 2)
+            s1 = int(state[1][i], 2)
+            s2 = int(state[2][i], 2)
+            s3 = int(state[3][i], 2)
 
-            s0 = (self.timesTwo(state[0][i]) ^ self.timesThree(state[1][i]) ^ state[2][i] ^ state[3][i]) & 0xff
-            s1 = (state[0][i] ^ self.timesTwo(state[1][i]) ^ self.timesThree(state[2][i]) ^ state[3][i]) & 0xff
-            s2 = (state[0][i] ^ state[1][i] ^ self.timesTwo(state[2][i]) ^ self.timesThree(state[3][i])) & 0xff
-            s3 = (self.timesThree(state[0][i]) ^ state[1][i] ^ state[2][i] ^ self.timesTwo(state[3][i])) & 0xff
+            # Perform the MixColumns transformation using Galois Field multiplication
+            s0 = (self._timesTwo(s0) ^ self._timesThree(s1) ^ s2 ^ s3) & 0xff
+            s1 = (s0 ^ self._timesTwo(s1) ^ self._timesThree(s2) ^ s3) & 0xff
+            s2 = (s0 ^ s1 ^ self._timesTwo(s2) ^ self._timesThree(s3)) & 0xff
+            s3 = (self._timesThree(s0) ^ s1 ^ s2 ^ self._timesTwo(s3)) & 0xff
 
-            state[0][i] = s0
-            state[1][i] = s1
-            state[2][i] = s2
-            state[3][i] = s3
+            # Convert integers back to binary strings and update state (zfill pads with 0's to get 8-bit string)
+            state[0][i] = bin(s0)[2:].zfill(8)
+            state[1][i] = bin(s1)[2:].zfill(8)
+            state[2][i] = bin(s2)[2:].zfill(8)
+            state[3][i] = bin(s3)[2:].zfill(8)
+        return state
             
-    def timesTwo(self, byte):
+    def _timesTwo(self, byte):
         if byte & 0x80:
             return ((byte << 1) ^ 0x1b) & 0xff
         else:
             return (byte << 1) & 0xff
 
-    def timesThree(self, byte):
-        return self.timesTwo(byte) ^ byte
+    def _timesThree(self, byte):
+        return self._timesTwo(byte) ^ byte
+    
+    def _addRoundKey(self, state, round_key):
+        for row in range(4):
+            for col in range(4):
+                state[row][col] = bin(int(state[row][col], 2) ^ int(round_key[row][col], 2))[2:].zfill(8)
+        return state
         
-    def encrypt(key, message):
-        # Placeholder for AES encryption logic
-        pass
+    def encrypt(self, key, message):
+        matrix_table = self._message_table(message)
+        sbox = self._create_sbox()
+        
+        for round in range(10):
+            sub_bytes_table = self._subBytes(matrix_table, sbox)
+            shifted_table = self._shift_rows(sub_bytes_table)
+            mixed_table = self._mixColumns(shifted_table)
+            matrix_table = mixed_table
+        
+        return mixed_table
         
 
 def main():
     cipher = AES(mt.key, mt.message)
     
-    cipher_table = cipher.message_table(cipher.message)
-    print("Cipher Table:")
-    print(cipher_table)
-    shifted_table = cipher.shift_rows(cipher_table)
-    print("Shifted Table:")
-    print(shifted_table)
+    encrypted_message = cipher.encrypt(cipher.key, cipher.message)
+    print("Original Message:")
+    message_block = cipher._message_table(cipher.message)
+    for row in message_block:
+        print(row)  
+    print("Encrypted Message Table:")
+    for row in encrypted_message:
+        print(row)  
+    
+    # cipher_table = cipher.message_table(cipher.message)
+    # print("Cipher Table:")
+    # print(cipher_table)
+    # shifted_table = cipher.shift_rows(cipher_table)
+    # print("Shifted Table:")
+    # print(shifted_table)
     
 if __name__ == "__main__":
     main()
