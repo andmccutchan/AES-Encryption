@@ -237,6 +237,7 @@ class AES:
             state = self._shift_rows(state)
             state = self._mix_columns(state)
             state = self._add_round_key(state, round_keys[r])
+            print("This is state after round " + str(r) + ":" + str(state))
 
         # Final round (no MixColumns)
         state = self._sub_bytes(state, sbox)
