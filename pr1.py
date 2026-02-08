@@ -1,5 +1,5 @@
 import random
-import secrets
+#import secrets
 
 """ 
 k = 8 bit key
