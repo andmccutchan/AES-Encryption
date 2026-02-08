@@ -1,3 +1,11 @@
+"""
+This program implements 128-bit block cipher AES
+Authors: Andrew McCuthan, Eleanor, Lam Do
+Date: Februrary 5, 2026
+CS402, Spring 2026
+"""
+
+import random
 import message_tuple as mt
 
 class AES:
@@ -79,7 +87,7 @@ class AES:
                 sbox_row = int(byte[:4], 2)
                 # Last 4 bits represent column index
                 sbox_col = int(byte[4:], 2)
-                output[row][col] = sbox[sbox_row][sbox_col]
+                output[row][col] = self.sbox[sbox_row][sbox_col]
         return output
     
     def _shift_rows(self, table):
@@ -160,11 +168,73 @@ class AES:
             matrix_table = mixed_table
         
         return mixed_table
+    def timesThree(self, byte):
+        return self.timesTwo(byte) ^ byte
+    
+    def keyExpansion(self, key):
+        """
+        Input: 128-bit key
+        Output: Array w of 44 words
+        """
+        # Pull values from textbook
+        Rcon_hex = ["00", "01", "02", "04", "08", "10", "20", "40", "80", "1B", "36"]
+        Rcon = [bin(int(hex,16))[2:].zfill(8) + "0" * 24 for hex in Rcon_hex]
+
+        # Initialize array w of 44 words
+        w = [None] * 44
+        # Step 1: Copy key to the first 4 words of w array
+        for i in range(4):
+            w[i] = key[i* 32 : i*32 + 32]
+        # Step 2: Fill in the rest of w array
+        for i in range(4, 44):
+            temp = w[i-1]
+            if i % 4 == 0:
+                temp = self.XOR(self.subWord(self.rotWord(temp)), Rcon[i//4])
+            w[i] = self.XOR(w[i-4], temp)
+        return w
+    
+    def XOR(self, string1, string2):
+        """
+        This function performs a bitwise XOR operation on string1 and string2
+        Input: 2 strings of binary bits
+        Output: XOR string of string1 and string2
+        """
+        xor_result = int(string1, 2) ^ int(string2, 2)
+        xor_string = bin(xor_result)[2:]
+        output = xor_string.zfill(len(string1))
+        return output
+    
+    def subWord(self, word):
+        """
+        This function performs byte substitution via S-box
+        Input: 4-byte word
+        Output: 4-byte word 
+        """
+        output = ""
+        for i in range(0, 32, 8):
+            byte = word[i:i+8]
+            row = int(byte[:4], 2)
+            col = int(byte[4:], 2)
+            output = output + self.sbox[row][col] 
+        return output
+
+    def rotWord(self, word):
+        """
+        This function performs one-byte left shift [B0, B1, B2, B3] -> [B1, B2, B3, B0]
+        Input: 4-byte word
+        Output 4-byte word
+        """
+        return word[8:] + word[:8]
+    
+    def encrypt(key, message):
+        # Placeholder for AES encryption logic
+        pass
         
 
 def main():
-    cipher = AES(mt.key, mt.message)
-    
+    key = bin(mt.key)[2:].zfill(128)
+    cipher = AES(key, mt.message)
+
     encrypted_message = cipher.encrypt(cipher.key, cipher.message)
     print("Original Message:")
     message_block = cipher._message_table(cipher.message)
@@ -183,8 +253,6 @@ def main():
     
 if __name__ == "__main__":
     main()
-
-
 
 
 
