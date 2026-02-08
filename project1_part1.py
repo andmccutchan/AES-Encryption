@@ -56,7 +56,7 @@ class AES:
             table[row_index].append(byte)
         return table
     
-    def _subBytes(self, message, sbox):
+    def _sub_bytes(self, message, sbox):
         """Substitution step of enctrpytion. Takes the original matrix and substitutes the bytes with our S-Box.
 
         Args:
@@ -103,7 +103,7 @@ class AES:
                 shifted_table.append(table[i][3:] + table[i][:3]) # You get the idea
         return shifted_table
     
-    def _mixColumns(self, state):
+    def _mix_columns(self, state):
         """This is performing the Mix column step of AES using GF multiplication.
 
         Args:
@@ -120,10 +120,10 @@ class AES:
             s3 = int(state[3][i], 2)
 
             # Perform the MixColumns transformation using Galois Field multiplication
-            s0 = (self._timesTwo(s0) ^ self._timesThree(s1) ^ s2 ^ s3) & 0xff
-            s1 = (s0 ^ self._timesTwo(s1) ^ self._timesThree(s2) ^ s3) & 0xff
-            s2 = (s0 ^ s1 ^ self._timesTwo(s2) ^ self._timesThree(s3)) & 0xff
-            s3 = (self._timesThree(s0) ^ s1 ^ s2 ^ self._timesTwo(s3)) & 0xff
+            s0 = (self._times_two(s0) ^ self._times_three(s1) ^ s2 ^ s3) & 0xff
+            s1 = (s0 ^ self._times_two(s1) ^ self._times_three(s2) ^ s3) & 0xff
+            s2 = (s0 ^ s1 ^ self._times_two(s2) ^ self._times_three(s3)) & 0xff
+            s3 = (self._times_three(s0) ^ s1 ^ s2 ^ self._times_two(s3)) & 0xff
 
             # Convert integers back to binary strings and update state (zfill pads with 0's to get 8-bit string)
             state[0][i] = bin(s0)[2:].zfill(8)
@@ -132,16 +132,16 @@ class AES:
             state[3][i] = bin(s3)[2:].zfill(8)
         return state
             
-    def _timesTwo(self, byte):
+    def _times_two(self, byte):
         if byte & 0x80:
             return ((byte << 1) ^ 0x1b) & 0xff
         else:
             return (byte << 1) & 0xff
 
-    def _timesThree(self, byte):
-        return self._timesTwo(byte) ^ byte
+    def _times_three(self, byte):
+        return self._times_two(byte) ^ byte
     
-    def _addRoundKey(self, state, round_key):
+    def _add_round_key(self, state, round_key):
         for row in range(4):
             for col in range(4):
                 state[row][col] = bin(int(state[row][col], 2) ^ int(round_key[row][col], 2))[2:].zfill(8)
@@ -151,15 +151,15 @@ class AES:
         matrix_table = self._message_table(message)
         sbox = self._create_sbox()
         expanded_key = self._key_expansion(key)
-        initial_round_key = _addRound
+        initial_round_key = expanded_key[0]
+        matrix_table = self._add_round_key(matrix_table, initial_round_key)
         
-        for round in range(10):
-            sub_bytes_table = self._subBytes(matrix_table, sbox)
+        for round in range(1, 9):
+            sub_bytes_table = self._sub_bytes(matrix_table, sbox)
             shifted_table = self._shift_rows(sub_bytes_table)
-            mixed_table = self._mixColumns(shifted_table)
-            matrix_table = mixed_table
-        
-        return mixed_table
+            mixed_table = self._mix_columns(shifted_table)
+            matrix_table = self._add_round_key(mixed_table, expanded_key[round])
+        return matrix_table
         
 
 def main():
