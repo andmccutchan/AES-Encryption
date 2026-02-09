@@ -273,13 +273,13 @@ class AES:
 
         # Rounds 1..9
         for r in range(1, 10):
-            state = self._sub_bytes(state, sbox)
+            state = self._sub_bytes(state)
             state = self._shift_rows(state)
             state = self._mix_columns(state)
             state = self._add_round_key(state, round_keys[r])
 
         # Final round (no MixColumns)
-        state = self._sub_bytes(state, sbox)
+        state = self._sub_bytes(state)
         state = self._shift_rows(state)
         state = self._add_round_key(state, round_keys[10])
 
