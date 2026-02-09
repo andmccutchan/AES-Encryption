@@ -246,7 +246,6 @@ class AES:
         """
         # Prepare state and round keys
         matrix_table = self._message_table(message)
-        sbox = self._create_sbox()
         expanded_key = self._key_expansion(key)
 
         # Build 11 round keys (each round key is 4 words -> 4x4 matrix of bytes)
@@ -275,41 +274,41 @@ class AES:
         state = self._shift_rows(state)
         state = self._add_round_key(state, round_keys[10])
 
-        return state
-
+        # Convert state to binary string representation of the encrypted message
+        ciphertext = ""
+        for row in state:
+            for byte in row:
+                ciphertext += byte
+        return ciphertext
+    
 def main():
     """Main function to test AES encryption with the key and message from message_tuple.py"""
     # Initialize AES cipher
     cipher = AES()
     
-    # Print the plaintext message
+    # Print message and key to be used for encryption
     print("=" * 20, "AES Encryption", "=" * 20)
-    print(f"Plaintext: {mt.plaintext}\n")
-
-    # Print the original message in table format
-    print("Original Message Table:")
-    message_block = cipher._message_table(mt.message)
-    for row in message_block:
-        print(row)  
+    print("Plaintext message: ")
+    print(mt.plaintext)
     print()
 
-    # Encrypt the message 
-    encrypted_message = cipher.encrypt(mt.key, mt.message)
-
-    # Print the encrypted message in table format
-    print("Encrypted Message Table:")
-    for row in encrypted_message:
-        print(row)  
+    print("Binary representation of plaintext: ")
+    print(mt.message)
     print()
-        
-    # Convert the encrypted message from binary to hexadecimal string format
-    ciphertext = ""
-    for row in encrypted_message:
-        for byte in row:
-            byte_int = int(byte, 2)
-            byte_hex = hex(byte_int)[2:].zfill(2)
-            ciphertext += byte_hex
-    print("Ciphertext:", ciphertext)
+
+    print("Key: ")
+    print(mt.key)
+    print()
+
+    # Encrypt message using AES encryption and print output
+    ciphertext = cipher.encrypt(mt.key, mt.message)
+    print("Binary representation of ciphertext:")
+    print(ciphertext)
+    print()
+
+    print("Hexadecimal representation of ciphertext:")
+    print(hex(int(ciphertext, 2))[2:].upper())
+    print()
     
 if __name__ == "__main__":
     main()
