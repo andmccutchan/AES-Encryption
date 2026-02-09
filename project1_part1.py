@@ -293,11 +293,14 @@ def main():
     # Initialize AES cipher with key and message
     cipher = AES(key, mt.message)
     
-    print("Key:", key)
-    print(f"Message: {mt.message}\n")
+    print("=" * 20, "AES Encryption", "=" * 20)
+    print(f"Plaintext: {mt.plaintext}\n")
+    
+    print("Key bits:", key)
+    print(f"Message bits: {mt.message}\n")
 
     # Print the original message in table format
-    print("Original Message:")
+    print("Original Message Table:")
     message_block = cipher._message_table(cipher.message)
     for row in message_block:
         print(row)  

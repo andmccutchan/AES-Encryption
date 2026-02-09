@@ -7,12 +7,15 @@ mode_of_operation = "ECB"
 def ecb(message, key):
     ciphertext = "" 
     for i in range(0, len(message), 128): 
-        if i+16 > len(message):
+        if i+128 > len(message):
             block = message[i:] + ' ' * (128 - (len(message) - i))
         else:
             block = message[i:i+128]
-        cipherblock = p1.AES(key, block).encrypt(key, block)
-        ciphertext += cipherblock
+        aes_cipher = p1.AES(key, block)
+        cipherblock = aes_cipher.encrypt(key, block)
+        # Flatten the 4x4 matrix to a string
+        cipherblock_str = ''.join(''.join(row) for row in cipherblock)
+        ciphertext += cipherblock_str
     return ciphertext
 
 def ctr(message, key):
@@ -20,16 +23,22 @@ def ctr(message, key):
     random.seed(mt.seed)  # Ensure the same random sequence for reproducibility
     counter = random.getrandbits(128)  # Initialize counter with a random 128-bit value
     for i in range(0, len(message), 128):
-        if i+16 > len(message):
+        if i+128 > len(message):
             block = message[i:] + ' ' * (128 - (len(message) - i))
         else:
             block = message[i:i+128]
-        cipher_ctr = p1.AES(key, str(counter)).encrypt(key, str(counter))
+        counter_str = format(counter, '0128b')  # Convert counter to 128-bit binary string
+        aes_cipher = p1.AES(key, counter_str)
+        cipher_ctr_matrix = aes_cipher.encrypt(key, counter_str)
+        # Flatten the 4x4 matrix to a string
+        cipher_ctr = ''.join(''.join(row) for row in cipher_ctr_matrix)
         if len(cipher_ctr) > len(block):
             cipher_ctr = cipher_ctr[:len(block)]
-        cipherblock = int(cipher_ctr) ^ int(block)
+        # XOR the encrypted counter with the plaintext block
+        cipherblock = ''.join(str(int(cipher_ctr[j]) ^ int(block[j])) for j in range(len(block)))
         ciphertext += cipherblock
-        counter += 1 
+        counter += 1
+    return ciphertext 
 
 def change_mode(new_mode):
     global mode_of_operation
@@ -41,7 +50,8 @@ def change_mode(new_mode):
 def main(): 
     # Get key from message_tuple file that initializes it
     key = mt.key
-    message =  "All Denison students should take" # First 256 bits of the message "All Denison students should take CS402!"
+    message_text = "All Denison students should take" # First 256 bits of the message "All Denison students should take CS402!"
+    message = mt.text_to_bits(message_text)[:128]  # Convert to binary and use first 128 bits
 
     # Get user input for mode of operation
     user_input = input("Enter mode of operation (ECB/CTR): ")
@@ -56,4 +66,5 @@ def main():
         print(f"CTR Ciphertext: {ciphertext}")
     else:
         print("Invalid mode of operation. Please choose 'ECB' or 'CTR'.")
-
+if __name__ == "__main__":
+    main()
