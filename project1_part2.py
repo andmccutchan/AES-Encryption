@@ -1,5 +1,3 @@
-<<<<<<< Updated upstream
-=======
 """
 This program implements AES encryption in ECB and CTR modes of operation. 
 Authors: Andrew McCuthan, Eleanor, Lam Do
@@ -98,5 +96,3 @@ def main():
         print(f"CTR Ciphertext: {ciphertext}")
     else:
         print("Invalid mode of operation. Please choose 'ECB' or 'CTR'.")
-
->>>>>>> Stashed changes

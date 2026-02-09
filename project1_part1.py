@@ -7,17 +7,9 @@ CS402, Spring 2026
 import message_tuple as mt
 
 class AES:
-    def __init__(self, key, message):
-        """Initializes the AES cipher with a key and message and create S-Box
-
-        Parameters: 
-            key (string): 128-bit key for encryption
-            message (string): 128-bit message to be encrypted
-
-        Returns: None
+    def __init__(self):
+        """Initializes the AES cipher and create S-Box
         """
-        self.key = key
-        self.message = message
         self.sbox = self._create_sbox()
         
     def _create_sbox(self):
@@ -290,30 +282,20 @@ def main():
     # Initialize AES cipher
     cipher = AES()
     
-    print("Original Message:")
-    message_block = cipher._message_table(mt.message)
-    """Main function to test AES encryption with the key and message from message_tuple.py"""
-    # Convert key from message_tuple to 128-bit binary string
-    key = bin(mt.key)[2:].zfill(128)
-
-    # Initialize AES cipher with key and message
-    cipher = AES(key, mt.message)
-    
+    # Print the plaintext message
     print("=" * 20, "AES Encryption", "=" * 20)
     print(f"Plaintext: {mt.plaintext}\n")
-    
-    print("Key bits:", key)
-    print(f"Message bits: {mt.message}\n")
 
     # Print the original message in table format
     print("Original Message Table:")
-    message_block = cipher._message_table(cipher.message)
+    message_block = cipher._message_table(mt.message)
     for row in message_block:
         print(row)  
     print()
 
     # Encrypt the message 
     encrypted_message = cipher.encrypt(mt.key, mt.message)
+
     # Print the encrypted message in table format
     print("Encrypted Message Table:")
     for row in encrypted_message:
@@ -328,13 +310,6 @@ def main():
             byte_hex = hex(byte_int)[2:].zfill(2)
             ciphertext += byte_hex
     print("Ciphertext:", ciphertext)
-    
-    # cipher_table = cipher.message_table(cipher.message)
-    # print("Cipher Table:")
-    # print(cipher_table)
-    # shifted_table = cipher.shift_rows(cipher_table)
-    # print("Shifted Table:")
-    # print(shifted_table)
     
 if __name__ == "__main__":
     main()
