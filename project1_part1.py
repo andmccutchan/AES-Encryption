@@ -9,10 +9,16 @@ import random
 import message_tuple as mt
 
 class AES:
-    def __init__(self, key, message):
-        self.key = key
-        self.message = message
-        # self.sbox = self._create_sbox()
+    def __init__(self):
+        """Initializes the AES cipher with a key and message and create S-Box
+
+        Parameters: 
+            key (string): 128-bit key for encryption
+            message (string): 128-bit message to be encrypted
+
+        Returns: None
+        """
+        self.sbox = self._create_sbox()
         
     def _create_sbox(self):
         """
@@ -232,17 +238,32 @@ class AES:
         
 
 def main():
-    key = bin(mt.key)[2:].zfill(128)
-    cipher = AES(key, mt.message)
-
-    encrypted_message = cipher.encrypt(cipher.key, cipher.message)
+    """Main function to test AES encryption with the key and message from message_tuple.py"""
+    # Initialize AES cipher
+    cipher = AES()
+    
     print("Original Message:")
-    message_block = cipher._message_table(cipher.message)
+    message_block = cipher._message_table(mt.message)
     for row in message_block:
         print(row)  
+    print()
+
+    # Encrypt the message 
+    encrypted_message = cipher.encrypt(mt.key, mt.message)
+    # Print the encrypted message in table format
     print("Encrypted Message Table:")
     for row in encrypted_message:
         print(row)  
+    print()
+        
+    # Convert the encrypted message from binary to hexadecimal string format
+    ciphertext = ""
+    for row in encrypted_message:
+        for byte in row:
+            byte_int = int(byte, 2)
+            byte_hex = hex(byte_int)[2:].zfill(2)
+            ciphertext += byte_hex
+    print("Ciphertext:", ciphertext)
     
     # cipher_table = cipher.message_table(cipher.message)
     # print("Cipher Table:")
